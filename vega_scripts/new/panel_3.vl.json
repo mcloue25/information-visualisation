@@ -1,0 +1,322 @@
+{
+  "$schema": "https://vega.github.io/schema/vega-lite/v6.json",
+  "params": [
+    {
+      "name": "startYear",
+      "value": 2000,
+      "bind": {
+        "input": "range",
+        "min": 2000,
+        "max": 2023,
+        "step": 1,
+        "name": "Start year: "
+      }
+    },
+    {
+      "name": "endYear",
+      "value": 2023,
+      "bind": {
+        "input": "range",
+        "min": 2000,
+        "max": 2023,
+        "step": 1,
+        "name": "End year: "
+      }
+    }
+  ],
+  "width": 440,
+  "height": 340,
+  "title": {
+    "text": "Renewables vs fossil dependency",
+    "subtitle": [
+      "Countries in the upper-left combine higher renewable share with lower fossil dependence in the selected end year.",
+      "Position carries the main comparison; bubble size adds population context."
+    ]
+  },
+  "data": {
+    "url": "../../data/results/data/energy_dashboard_yearly.csv",
+    "format": {
+      "type": "csv",
+      "parse": {
+        "year": "number",
+        "population": "number",
+        "renewables_share_energy": "number",
+        "fossil_share_energy": "number"
+      }
+    }
+  },
+  "transform": [
+    {
+      "filter": "datum.year == max(startYear, endYear)"
+    },
+    {
+      "calculate": "datum.is_focus_country === true || datum.is_focus_country === 'True' || datum.is_focus_country === 'true'",
+      "as": "is_highlight"
+    }
+  ],
+  "layer": [
+    {
+      "data": {
+        "values": [
+          {
+            "x": 50
+          }
+        ]
+      },
+      "mark": {
+        "type": "rule",
+        "strokeDash": [
+          4,
+          4
+        ],
+        "strokeWidth": 1,
+        "color": "#D6D6D6"
+      },
+      "encoding": {
+        "x": {
+          "field": "x",
+          "type": "quantitative"
+        }
+      }
+    },
+    {
+      "data": {
+        "values": [
+          {
+            "y": 20
+          }
+        ]
+      },
+      "mark": {
+        "type": "rule",
+        "strokeDash": [
+          4,
+          4
+        ],
+        "strokeWidth": 1,
+        "color": "#D6D6D6"
+      },
+      "encoding": {
+        "y": {
+          "field": "y",
+          "type": "quantitative"
+        }
+      }
+    },
+    {
+      "mark": {
+        "type": "circle",
+        "opacity": 0.38,
+        "stroke": "white",
+        "strokeWidth": 0.5
+      },
+      "encoding": {
+        "x": {
+          "field": "fossil_share_energy",
+          "type": "quantitative",
+          "title": "Fossil share of primary energy (%)",
+          "scale": {
+            "domain": [
+              0,
+              100
+            ]
+          },
+          "axis": {
+            "tickCount": 6,
+            "grid": true,
+            "gridColor": "#ECECEC",
+            "domain": false,
+            "ticks": false
+          }
+        },
+        "y": {
+          "field": "renewables_share_energy",
+          "type": "quantitative",
+          "title": "Renewables share of primary energy (%)",
+          "scale": {
+            "domain": [
+              0,
+              75
+            ]
+          },
+          "axis": {
+            "tickCount": 5,
+            "grid": true,
+            "gridColor": "#ECECEC",
+            "domain": false,
+            "ticks": false
+          }
+        },
+        "size": {
+          "field": "population",
+          "type": "quantitative",
+          "scale": {
+            "range": [
+              18,
+              1200
+            ]
+          },
+          "legend": null
+        },
+        "color": {
+          "condition": {
+            "test": "datum.is_highlight",
+            "value": "#2E7D57"
+          },
+          "value": "#BFC5C1"
+        },
+        "tooltip": [
+          {
+            "field": "country",
+            "type": "nominal",
+            "title": "Country"
+          },
+          {
+            "field": "renewables_share_energy",
+            "type": "quantitative",
+            "format": ".1f",
+            "title": "Renewables share (%)"
+          },
+          {
+            "field": "fossil_share_energy",
+            "type": "quantitative",
+            "format": ".1f",
+            "title": "Fossil share (%)"
+          },
+          {
+            "field": "population",
+            "type": "quantitative",
+            "format": ",",
+            "title": "Population"
+          }
+        ]
+      }
+    },
+    {
+      "transform": [
+        {
+          "filter": "datum.is_highlight"
+        }
+      ],
+      "mark": {
+        "type": "circle",
+        "opacity": 0.95,
+        "stroke": "white",
+        "strokeWidth": 1
+      },
+      "encoding": {
+        "x": {
+          "field": "fossil_share_energy",
+          "type": "quantitative"
+        },
+        "y": {
+          "field": "renewables_share_energy",
+          "type": "quantitative"
+        },
+        "size": {
+          "field": "population",
+          "type": "quantitative",
+          "scale": {
+            "range": [
+              18,
+              1200
+            ]
+          },
+          "legend": null
+        },
+        "color": {
+          "value": "#2E7D57"
+        },
+        "tooltip": [
+          {
+            "field": "country",
+            "type": "nominal",
+            "title": "Country"
+          },
+          {
+            "field": "renewables_share_energy",
+            "type": "quantitative",
+            "format": ".1f",
+            "title": "Renewables share (%)"
+          },
+          {
+            "field": "fossil_share_energy",
+            "type": "quantitative",
+            "format": ".1f",
+            "title": "Fossil share (%)"
+          },
+          {
+            "field": "population",
+            "type": "quantitative",
+            "format": ",",
+            "title": "Population"
+          }
+        ]
+      }
+    },
+    {
+      "transform": [
+        {
+          "filter": "datum.is_highlight"
+        }
+      ],
+      "mark": {
+        "type": "text",
+        "fontSize": 10,
+        "color": "#333333"
+      },
+      "encoding": {
+        "x": {
+          "field": "fossil_share_energy",
+          "type": "quantitative"
+        },
+        "y": {
+          "field": "renewables_share_energy",
+          "type": "quantitative"
+        },
+        "text": {
+          "field": "country"
+        },
+        "dx": {
+          "value": 6
+        },
+        "dy": {
+          "value": -8
+        },
+        "align": {
+          "value": "left"
+        }
+      }
+    }
+  ],
+  "config": {
+    "background": "white",
+    "view": {
+      "stroke": null
+    },
+    "font": "Inter, Arial, sans-serif",
+    "title": {
+      "anchor": "start",
+      "fontSize": 18,
+      "fontWeight": "normal",
+      "subtitleFontSize": 11,
+      "subtitleColor": "#666",
+      "offset": 8
+    },
+    "axis": {
+      "labelFontSize": 11,
+      "titleFontSize": 12,
+      "domainColor": "#999",
+      "tickColor": "#999",
+      "gridColor": "#E6E6E6",
+      "labelColor": "#333",
+      "titleColor": "#333"
+    },
+    "legend": {
+      "labelFontSize": 11,
+      "titleFontSize": 12,
+      "labelColor": "#333",
+      "titleColor": "#333"
+    }
+  }
+}
