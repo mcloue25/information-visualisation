@@ -45,7 +45,7 @@
       "expr": "startYearInput == endYearInput ? (endYearInput == 2000 ? 2001 : endYearInput) : max(startYearInput, endYearInput)"
     }
   ],
-  "spacing": 70,
+  "spacing": 42,
   "config": {
     "background": "white",
     "view": {
@@ -83,8 +83,7 @@
       "height": 520,
       "title": {
         "text": "Fossil-fuel reduction by country",
-        "anchor": "middle",
-        "dx": 60
+        "anchor": "middle"
       },
       "projection": {
         "type": "equalEarth"
