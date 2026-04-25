@@ -1,11 +1,17 @@
 {
   "$schema": "https://vega.github.io/schema/vega-lite/v6.json",
   "title": {
-    "text": "Global Energy Transition: Leaders, Laggards, and Trends",
+    "text": "Global Energy Transition",
     "subtitle": [
-      "Designed for rapid comparison: ranking, change, dependence, and trajectories on one page.",
-      "The layout favors common scales, direct labels, minimal clutter, and deliberate use of color."
-    ]
+      "Leaders, laggards, and fossil-fuel reductions from the selected years."
+    ],
+    "anchor": "middle",
+    "fontSize": 34,
+    "fontWeight": "bold",
+    "color": "#163225",
+    "subtitleFontSize": 14,
+    "subtitleColor": "#5F6B66",
+    "offset": 14
   },
   "params": [
     {
@@ -16,7 +22,7 @@
         "min": 2000,
         "max": 2023,
         "step": 1,
-        "name": "Start year: "
+        "name": "Start: "
       }
     },
     {
@@ -27,25 +33,193 @@
         "min": 2000,
         "max": 2023,
         "step": 1,
-        "name": "End year: "
+        "name": "End: "
       }
     }
   ],
+  "spacing": 24,
+  "config": {
+    "background": "white",
+    "view": {
+      "stroke": null
+    },
+    "font": "Inter, Arial, sans-serif",
+    "title": {
+      "anchor": "start",
+      "fontSize": 18,
+      "fontWeight": "bold",
+      "color": "#1F2933",
+      "subtitleFontSize": 11,
+      "subtitleColor": "#5F6B66",
+      "offset": 8
+    },
+    "axis": {
+      "labelFontSize": 11,
+      "titleFontSize": 12,
+      "domainColor": "#B8C0BC",
+      "tickColor": "#B8C0BC",
+      "gridColor": "#E9ECEA",
+      "labelColor": "#1F2933",
+      "titleColor": "#1F2933"
+    },
+    "legend": {
+      "labelFontSize": 11,
+      "titleFontSize": 12,
+      "labelColor": "#1F2933",
+      "titleColor": "#1F2933"
+    }
+  },
   "vconcat": [
+    {
+      "width": 1200,
+      "height": 520,
+      "title": {
+        "text": "Fossil-fuel reduction by country",
+        "subtitle": [
+          "Darker green = larger fall in fossil-fuel share."
+        ],
+        "anchor": "start"
+      },
+      "projection": {
+        "type": "equalEarth"
+      },
+      "layer": [
+        {
+          "data": {
+            "url": "https://vega.github.io/vega-datasets/data/world-110m.json",
+            "format": {
+              "type": "topojson",
+              "feature": "countries"
+            }
+          },
+          "mark": {
+            "type": "geoshape",
+            "fill": "#F1F1F1",
+            "stroke": "white",
+            "strokeWidth": 0.25
+          }
+        },
+        {
+          "data": {
+            "url": "https://vega.github.io/vega-datasets/data/world-110m.json",
+            "format": {
+              "type": "topojson",
+              "feature": "countries"
+            }
+          },
+          "transform": [
+            {
+              "lookup": "id",
+              "from": {
+                "data": {
+                  "url": "../data/results/data/energy_fossil_reduction_map.csv",
+                  "format": {
+                    "type": "csv",
+                    "parse": {
+                      "iso_numeric": "number",
+                      "fossil_share_energy_start": "number",
+                      "fossil_share_energy_latest": "number",
+                      "fossil_reduction": "number",
+                      "renewables_share_energy_latest": "number",
+                      "population_latest": "number",
+                      "start_year": "number",
+                      "latest_year": "number"
+                    }
+                  }
+                },
+                "key": "iso_numeric",
+                "fields": [
+                  "country",
+                  "iso_code",
+                  "start_year",
+                  "latest_year",
+                  "fossil_share_energy_start",
+                  "fossil_share_energy_latest",
+                  "fossil_reduction",
+                  "renewables_share_energy_latest",
+                  "population_latest"
+                ]
+              }
+            },
+            {
+              "filter": "isValid(datum.fossil_reduction)"
+            }
+          ],
+          "mark": {
+            "type": "geoshape",
+            "stroke": "white",
+            "strokeWidth": 0.25
+          },
+          "encoding": {
+            "color": {
+              "field": "fossil_reduction",
+              "type": "quantitative",
+              "title": "Reduction (percentage points)",
+              "scale": {
+                "scheme": "greens"
+              },
+              "legend": {
+                "orient": "right",
+                "direction": "vertical",
+                "gradientLength": 360,
+                "gradientThickness": 16,
+                "titleOrient": "left",
+                "labelFontSize": 12,
+                "titleFontSize": 12,
+                "titleColor": "#1F2933",
+                "labelColor": "#1F2933",
+                "offset": 8
+              }
+            },
+            "tooltip": [
+              {
+                "field": "country",
+                "type": "nominal",
+                "title": "Country"
+              },
+              {
+                "field": "fossil_share_energy_start",
+                "type": "quantitative",
+                "format": ".1f",
+                "title": "Fossil share in 2000 (%)"
+              },
+              {
+                "field": "fossil_share_energy_latest",
+                "type": "quantitative",
+                "format": ".1f",
+                "title": "Latest fossil share (%)"
+              },
+              {
+                "field": "fossil_reduction",
+                "type": "quantitative",
+                "format": "+.1f",
+                "title": "Reduction"
+              },
+              {
+                "field": "renewables_share_energy_latest",
+                "type": "quantitative",
+                "format": ".1f",
+                "title": "Latest renewables share (%)"
+              }
+            ]
+          }
+        }
+      ]
+    },
     {
       "hconcat": [
         {
           "width": 420,
-          "height": 360,
+          "height": 330,
           "title": {
-            "text": "Who leads today?",
+            "text": "Renewable leaders",
             "subtitle": [
-              "Top 10 countries by renewable share of primary energy in the selected end year.",
-              "Move the sliders above to compare how leadership changes over time."
-            ]
+              "Top 10 by share in end year."
+            ],
+            "anchor": "start"
           },
           "data": {
-            "url": "../../data/results/data/energy_dashboard_yearly.csv",
+            "url": "../data/results/data/energy_dashboard_yearly.csv",
             "format": {
               "type": "csv",
               "parse": {
@@ -110,7 +284,8 @@
                 "align": "left",
                 "baseline": "middle",
                 "fontSize": 11,
-                "color": "#333333"
+                "color": "#333333",
+                "fontWeight": "normal"
               },
               "encoding": {
                 "x": {
@@ -141,7 +316,7 @@
                   "type": "quantitative",
                   "scale": {
                     "domain": [
-                      -38,
+                      -35,
                       90
                     ]
                   },
@@ -192,7 +367,8 @@
                 "baseline": "middle",
                 "dx": 8,
                 "fontSize": 11,
-                "color": "#2E7D57"
+                "color": "#2E7D57",
+                "fontWeight": "normal"
               },
               "encoding": {
                 "x": {
@@ -207,17 +383,17 @@
           ]
         },
         {
-          "width": 460,
-          "height": 360,
+          "width": 420,
+          "height": 330,
           "title": {
-            "text": "Who improved most?",
+            "text": "Biggest gains",
             "subtitle": [
-              "Top 10 gains in renewables share between the selected start and end years.",
-              "The dumbbell compares the two chosen years directly and labels the net change."
-            ]
+              "Change between start and end year."
+            ],
+            "anchor": "start"
           },
           "data": {
-            "url": "../../data/results/data/energy_improver_pairs.csv",
+            "url": "../data/results/data/energy_improver_pairs.csv",
             "format": {
               "type": "csv",
               "parse": {
@@ -292,7 +468,8 @@
                 "align": "left",
                 "baseline": "middle",
                 "fontSize": 11,
-                "color": "#333333"
+                "color": "#333333",
+                "fontWeight": "normal"
               },
               "encoding": {
                 "x": {
@@ -323,8 +500,8 @@
                   "type": "quantitative",
                   "scale": {
                     "domain": [
-                      -34,
-                      62
+                      -35,
+                      65
                     ]
                   },
                   "title": null,
@@ -412,7 +589,8 @@
                 "baseline": "middle",
                 "dx": 22,
                 "fontSize": 11,
-                "color": "#2E7D57"
+                "color": "#2E7D57",
+                "fontWeight": "normal"
               },
               "encoding": {
                 "x": {
@@ -425,24 +603,19 @@
               }
             }
           ]
-        }
-      ],
-      "spacing": 18
-    },
-    {
-      "hconcat": [
+        },
         {
-          "width": 440,
-          "height": 340,
+          "width": 420,
+          "height": 330,
           "title": {
-            "text": "Renewables vs fossil dependency",
+            "text": "Renewables vs fossil dependence",
             "subtitle": [
-              "Countries in the upper-left combine higher renewable share with lower fossil dependence in the selected end year.",
-              "Position carries the main comparison; bubble size adds population context."
-            ]
+              "Upper-left = cleaner energy mix."
+            ],
+            "anchor": "start"
           },
           "data": {
-            "url": "../../data/results/data/energy_dashboard_yearly.csv",
+            "url": "../data/results/data/energy_dashboard_yearly.csv",
             "format": {
               "type": "csv",
               "parse": {
@@ -671,7 +844,8 @@
               "mark": {
                 "type": "text",
                 "fontSize": 10,
-                "color": "#333333"
+                "color": "#333333",
+                "fontWeight": "normal"
               },
               "encoding": {
                 "x": {
@@ -697,262 +871,260 @@
               }
             }
           ]
+        }
+      ],
+      "spacing": 20
+    },
+    {
+      "width": 1320,
+      "height": 340,
+      "title": {
+        "text": "Transition paths over time",
+        "subtitle": [
+          "Clean electricity share minus fossil share."
+        ],
+        "anchor": "start"
+      },
+      "data": {
+        "url": "../data/results/data/energy_story_countries.csv",
+        "format": {
+          "type": "csv",
+          "parse": {
+            "year": "number",
+            "clean_share_elec": "number",
+            "fossil_share_elec": "number",
+            "transition_gap": "number"
+          }
+        }
+      },
+      "transform": [
+        {
+          "filter": "datum.year >= min(startYear, endYear) && datum.year <= max(startYear, endYear)"
         },
         {
-          "width": 860,
-          "height": 260,
-          "title": {
-            "text": "How has the transition evolved over time?",
-            "subtitle": [
-              "Selected leaders, an improver, a home-country reference, and large economies over the chosen time window.",
-              "Direct labels stay attached to the selected end year."
+          "calculate": "datum.clean_share_elec - datum.fossil_share_elec",
+          "as": "transition_gap"
+        }
+      ],
+      "layer": [
+        {
+          "data": {
+            "values": [
+              {
+                "transition_gap": 0
+              }
             ]
           },
-          "data": {
-            "url": "../../data/results/data/energy_story_countries.csv",
-            "format": {
-              "type": "csv",
-              "parse": {
-                "year": "number",
-                "clean_share_elec": "number",
-                "fossil_share_elec": "number",
-                "transition_gap": "number"
+          "mark": {
+            "type": "rule",
+            "color": "#A0A0A0"
+          },
+          "encoding": {
+            "y": {
+              "field": "transition_gap",
+              "type": "quantitative",
+              "scale": {
+                "domain": [
+                  -100,
+                  110
+                ]
               }
             }
+          }
+        },
+        {
+          "mark": {
+            "type": "line",
+            "strokeWidth": 2
           },
+          "encoding": {
+            "x": {
+              "field": "year",
+              "type": "quantitative",
+              "title": "Year"
+            },
+            "y": {
+              "field": "transition_gap",
+              "type": "quantitative",
+              "title": "Clean electricity share minus fossil share (pp)",
+              "scale": {
+                "domain": [
+                  -100,
+                  110
+                ]
+              }
+            },
+            "color": {
+              "field": "country",
+              "type": "nominal",
+              "scale": {
+                "domain": [
+                  "Iceland",
+                  "Norway",
+                  "Sweden",
+                  "Denmark",
+                  "Ireland",
+                  "India"
+                ],
+                "range": [
+                  "#1F77B4",
+                  "#2CA02C",
+                  "#9467BD",
+                  "#FF7F0E",
+                  "#D62728",
+                  "#8C564B"
+                ]
+              },
+              "legend": null
+            },
+            "detail": {
+              "field": "country"
+            }
+          }
+        },
+        {
           "transform": [
             {
               "filter": "datum.year >= min(startYear, endYear) && datum.year <= max(startYear, endYear)"
             },
             {
-              "calculate": "datum.clean_share_elec - datum.fossil_share_elec",
-              "as": "transition_gap"
+              "joinaggregate": [
+                {
+                  "op": "max",
+                  "field": "year",
+                  "as": "last_year"
+                }
+              ],
+              "groupby": [
+                "country"
+              ]
+            },
+            {
+              "filter": "datum.year == datum.last_year"
             }
           ],
-          "layer": [
-            {
-              "data": {
-                "values": [
-                  {
-                    "transition_gap": 0
-                  }
+          "mark": {
+            "type": "point",
+            "filled": true,
+            "size": 40
+          },
+          "encoding": {
+            "x": {
+              "field": "year",
+              "type": "quantitative"
+            },
+            "y": {
+              "field": "transition_gap",
+              "type": "quantitative",
+              "scale": {
+                "domain": [
+                  -100,
+                  110
+                ]
+              }
+            },
+            "color": {
+              "field": "country",
+              "type": "nominal",
+              "scale": {
+                "domain": [
+                  "Iceland",
+                  "Norway",
+                  "Sweden",
+                  "Denmark",
+                  "Ireland",
+                  "India"
+                ],
+                "range": [
+                  "#1F77B4",
+                  "#2CA02C",
+                  "#9467BD",
+                  "#FF7F0E",
+                  "#D62728",
+                  "#8C564B"
                 ]
               },
-              "mark": {
-                "type": "rule",
-                "color": "#A0A0A0"
-              },
-              "encoding": {
-                "y": {
-                  "field": "transition_gap",
-                  "type": "quantitative"
-                }
-              }
-            },
-            {
-              "mark": {
-                "type": "line",
-                "strokeWidth": 2
-              },
-              "encoding": {
-                "x": {
-                  "field": "year",
-                  "type": "quantitative",
-                  "title": "Year"
-                },
-                "y": {
-                  "field": "transition_gap",
-                  "type": "quantitative",
-                  "title": "Clean electricity share minus fossil share (pp)"
-                },
-                "color": {
-                  "field": "country",
-                  "type": "nominal",
-                  "scale": {
-                    "domain": [
-                      "Iceland",
-                      "Norway",
-                      "Sweden",
-                      "Denmark",
-                      "Ireland",
-                      "India"
-                    ],
-                    "range": [
-                      "#1F77B4",
-                      "#2CA02C",
-                      "#9467BD",
-                      "#FF7F0E",
-                      "#D62728",
-                      "#8C564B"
-                    ]
-                  },
-                  "legend": null
-                },
-                "detail": {
-                  "field": "country"
-                }
-              }
-            },
-            {
-              "transform": [
-                {
-                  "filter": "datum.year >= min(startYear, endYear) && datum.year <= max(startYear, endYear)"
-                },
-                {
-                  "joinaggregate": [
-                    {
-                      "op": "max",
-                      "field": "year",
-                      "as": "last_year"
-                    }
-                  ],
-                  "groupby": [
-                    "country"
-                  ]
-                },
-                {
-                  "filter": "datum.year == datum.last_year"
-                }
-              ],
-              "mark": {
-                "type": "point",
-                "filled": true,
-                "size": 40
-              },
-              "encoding": {
-                "x": {
-                  "field": "year",
-                  "type": "quantitative"
-                },
-                "y": {
-                  "field": "transition_gap",
-                  "type": "quantitative"
-                },
-                "color": {
-                  "field": "country",
-                  "type": "nominal",
-                  "scale": {
-                    "domain": [
-                      "Iceland",
-                      "Norway",
-                      "Sweden",
-                      "Denmark",
-                      "Ireland",
-                      "India"
-                    ],
-                    "range": [
-                      "#1F77B4",
-                      "#2CA02C",
-                      "#9467BD",
-                      "#FF7F0E",
-                      "#D62728",
-                      "#8C564B"
-                    ]
-                  },
-                  "legend": null
-                }
-              }
-            },
-            {
-              "transform": [
-                {
-                  "filter": "datum.year >= min(startYear, endYear) && datum.year <= max(startYear, endYear)"
-                },
-                {
-                  "joinaggregate": [
-                    {
-                      "op": "max",
-                      "field": "year",
-                      "as": "last_year"
-                    }
-                  ],
-                  "groupby": [
-                    "country"
-                  ]
-                },
-                {
-                  "filter": "datum.year == datum.last_year"
-                }
-              ],
-              "mark": {
-                "type": "text",
-                "align": "left",
-                "baseline": "middle",
-                "dx": 5,
-                "fontSize": 9
-              },
-              "encoding": {
-                "x": {
-                  "field": "year",
-                  "type": "quantitative"
-                },
-                "y": {
-                  "field": "transition_gap",
-                  "type": "quantitative"
-                },
-                "text": {
-                  "field": "country"
-                },
-                "color": {
-                  "field": "country",
-                  "type": "nominal",
-                  "scale": {
-                    "domain": [
-                      "Iceland",
-                      "Norway",
-                      "Sweden",
-                      "Denmark",
-                      "Ireland",
-                      "India"
-                    ],
-                    "range": [
-                      "#1F77B4",
-                      "#2CA02C",
-                      "#9467BD",
-                      "#FF7F0E",
-                      "#D62728",
-                      "#8C564B"
-                    ]
-                  },
-                  "legend": null
-                }
-              }
+              "legend": null
             }
-          ]
+          }
+        },
+        {
+          "transform": [
+            {
+              "filter": "datum.year >= min(startYear, endYear) && datum.year <= max(startYear, endYear)"
+            },
+            {
+              "joinaggregate": [
+                {
+                  "op": "max",
+                  "field": "year",
+                  "as": "last_year"
+                }
+              ],
+              "groupby": [
+                "country"
+              ]
+            },
+            {
+              "filter": "datum.year == datum.last_year"
+            },
+            {
+              "calculate": "datum.transition_gap + (datum.country == 'Iceland' ? 8 : datum.country == 'Norway' ? 3 : datum.country == 'Sweden' ? -3 : datum.country == 'Denmark' ? 5 : datum.country == 'Ireland' ? 0 : datum.country == 'India' ? -4 : 0)",
+              "as": "label_y"
+            }
+          ],
+          "mark": {
+            "type": "text",
+            "align": "left",
+            "baseline": "middle",
+            "dx": 8,
+            "fontSize": 11,
+            "fontWeight": "bold"
+          },
+          "encoding": {
+            "x": {
+              "field": "year",
+              "type": "quantitative"
+            },
+            "y": {
+              "field": "label_y",
+              "type": "quantitative",
+              "scale": {
+                "domain": [
+                  -100,
+                  110
+                ]
+              }
+            },
+            "text": {
+              "field": "country"
+            },
+            "color": {
+              "field": "country",
+              "type": "nominal",
+              "scale": {
+                "domain": [
+                  "Iceland",
+                  "Norway",
+                  "Sweden",
+                  "Denmark",
+                  "Ireland",
+                  "India"
+                ],
+                "range": [
+                  "#1F77B4",
+                  "#2CA02C",
+                  "#9467BD",
+                  "#FF7F0E",
+                  "#D62728",
+                  "#8C564B"
+                ]
+              },
+              "legend": null
+            }
+          }
         }
-      ],
-      "spacing": 18
+      ]
     }
-  ],
-  "spacing": 20,
-  "config": {
-    "background": "white",
-    "view": {
-      "stroke": null
-    },
-    "font": "Inter, Arial, sans-serif",
-    "title": {
-      "anchor": "start",
-      "fontSize": 18,
-      "fontWeight": "normal",
-      "subtitleFontSize": 11,
-      "subtitleColor": "#666",
-      "offset": 8
-    },
-    "axis": {
-      "labelFontSize": 11,
-      "titleFontSize": 12,
-      "domainColor": "#999",
-      "tickColor": "#999",
-      "gridColor": "#E6E6E6",
-      "labelColor": "#333",
-      "titleColor": "#333"
-    },
-    "legend": {
-      "labelFontSize": 11,
-      "titleFontSize": 12,
-      "labelColor": "#333",
-      "titleColor": "#333"
-    }
-  }
+  ]
 }

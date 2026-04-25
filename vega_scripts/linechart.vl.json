@@ -1,0 +1,307 @@
+{
+  "$schema": "https://vega.github.io/schema/vega-lite/v6.json",
+  "params": [
+    {
+      "name": "startYear",
+      "value": 2000,
+      "bind": {
+        "input": "range",
+        "min": 2000,
+        "max": 2023,
+        "step": 1,
+        "name": "Start: "
+      }
+    },
+    {
+      "name": "endYear",
+      "value": 2023,
+      "bind": {
+        "input": "range",
+        "min": 2000,
+        "max": 2023,
+        "step": 1,
+        "name": "End: "
+      }
+    }
+  ],
+  "width": 1320,
+  "height": 340,
+  "title": {
+    "text": "Transition paths over time",
+    "subtitle": [
+      "Clean electricity share minus fossil share."
+    ],
+    "anchor": "start"
+  },
+  "data": {
+    "url": "../data/results/data/energy_story_countries.csv",
+    "format": {
+      "type": "csv",
+      "parse": {
+        "year": "number",
+        "clean_share_elec": "number",
+        "fossil_share_elec": "number",
+        "transition_gap": "number"
+      }
+    }
+  },
+  "transform": [
+    {
+      "filter": "datum.year >= min(startYear, endYear) && datum.year <= max(startYear, endYear)"
+    },
+    {
+      "calculate": "datum.clean_share_elec - datum.fossil_share_elec",
+      "as": "transition_gap"
+    }
+  ],
+  "layer": [
+    {
+      "data": {
+        "values": [
+          {
+            "transition_gap": 0
+          }
+        ]
+      },
+      "mark": {
+        "type": "rule",
+        "color": "#A0A0A0"
+      },
+      "encoding": {
+        "y": {
+          "field": "transition_gap",
+          "type": "quantitative",
+          "scale": {
+            "domain": [
+              -100,
+              110
+            ]
+          }
+        }
+      }
+    },
+    {
+      "mark": {
+        "type": "line",
+        "strokeWidth": 2
+      },
+      "encoding": {
+        "x": {
+          "field": "year",
+          "type": "quantitative",
+          "title": "Year"
+        },
+        "y": {
+          "field": "transition_gap",
+          "type": "quantitative",
+          "title": "Clean electricity share minus fossil share (pp)",
+          "scale": {
+            "domain": [
+              -100,
+              110
+            ]
+          }
+        },
+        "color": {
+          "field": "country",
+          "type": "nominal",
+          "scale": {
+            "domain": [
+              "Iceland",
+              "Norway",
+              "Sweden",
+              "Denmark",
+              "Ireland",
+              "India"
+            ],
+            "range": [
+              "#1F77B4",
+              "#2CA02C",
+              "#9467BD",
+              "#FF7F0E",
+              "#D62728",
+              "#8C564B"
+            ]
+          },
+          "legend": null
+        },
+        "detail": {
+          "field": "country"
+        }
+      }
+    },
+    {
+      "transform": [
+        {
+          "filter": "datum.year >= min(startYear, endYear) && datum.year <= max(startYear, endYear)"
+        },
+        {
+          "joinaggregate": [
+            {
+              "op": "max",
+              "field": "year",
+              "as": "last_year"
+            }
+          ],
+          "groupby": [
+            "country"
+          ]
+        },
+        {
+          "filter": "datum.year == datum.last_year"
+        }
+      ],
+      "mark": {
+        "type": "point",
+        "filled": true,
+        "size": 40
+      },
+      "encoding": {
+        "x": {
+          "field": "year",
+          "type": "quantitative"
+        },
+        "y": {
+          "field": "transition_gap",
+          "type": "quantitative",
+          "scale": {
+            "domain": [
+              -100,
+              110
+            ]
+          }
+        },
+        "color": {
+          "field": "country",
+          "type": "nominal",
+          "scale": {
+            "domain": [
+              "Iceland",
+              "Norway",
+              "Sweden",
+              "Denmark",
+              "Ireland",
+              "India"
+            ],
+            "range": [
+              "#1F77B4",
+              "#2CA02C",
+              "#9467BD",
+              "#FF7F0E",
+              "#D62728",
+              "#8C564B"
+            ]
+          },
+          "legend": null
+        }
+      }
+    },
+    {
+      "transform": [
+        {
+          "filter": "datum.year >= min(startYear, endYear) && datum.year <= max(startYear, endYear)"
+        },
+        {
+          "joinaggregate": [
+            {
+              "op": "max",
+              "field": "year",
+              "as": "last_year"
+            }
+          ],
+          "groupby": [
+            "country"
+          ]
+        },
+        {
+          "filter": "datum.year == datum.last_year"
+        },
+        {
+          "calculate": "datum.transition_gap + (datum.country == 'Iceland' ? 8 : datum.country == 'Norway' ? 3 : datum.country == 'Sweden' ? -3 : datum.country == 'Denmark' ? 5 : datum.country == 'Ireland' ? 0 : datum.country == 'India' ? -4 : 0)",
+          "as": "label_y"
+        }
+      ],
+      "mark": {
+        "type": "text",
+        "align": "left",
+        "baseline": "middle",
+        "dx": 8,
+        "fontSize": 11,
+        "fontWeight": "bold"
+      },
+      "encoding": {
+        "x": {
+          "field": "year",
+          "type": "quantitative"
+        },
+        "y": {
+          "field": "label_y",
+          "type": "quantitative",
+          "scale": {
+            "domain": [
+              -100,
+              110
+            ]
+          }
+        },
+        "text": {
+          "field": "country"
+        },
+        "color": {
+          "field": "country",
+          "type": "nominal",
+          "scale": {
+            "domain": [
+              "Iceland",
+              "Norway",
+              "Sweden",
+              "Denmark",
+              "Ireland",
+              "India"
+            ],
+            "range": [
+              "#1F77B4",
+              "#2CA02C",
+              "#9467BD",
+              "#FF7F0E",
+              "#D62728",
+              "#8C564B"
+            ]
+          },
+          "legend": null
+        }
+      }
+    }
+  ],
+  "config": {
+    "background": "white",
+    "view": {
+      "stroke": null
+    },
+    "font": "Inter, Arial, sans-serif",
+    "title": {
+      "anchor": "start",
+      "fontSize": 18,
+      "fontWeight": "bold",
+      "color": "#1F2933",
+      "subtitleFontSize": 11,
+      "subtitleColor": "#5F6B66",
+      "offset": 8
+    },
+    "axis": {
+      "labelFontSize": 11,
+      "titleFontSize": 12,
+      "domainColor": "#B8C0BC",
+      "tickColor": "#B8C0BC",
+      "gridColor": "#E9ECEA",
+      "labelColor": "#1F2933",
+      "titleColor": "#1F2933"
+    },
+    "legend": {
+      "labelFontSize": 11,
+      "titleFontSize": 12,
+      "labelColor": "#1F2933",
+      "titleColor": "#1F2933"
+    }
+  }
+}

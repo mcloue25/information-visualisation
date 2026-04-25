@@ -34,7 +34,7 @@
     ]
   },
   "data": {
-    "url": "../../data/results/data/energy_story_countries.csv",
+    "url": "../data/results/data/energy_story_countries.csv",
     "format": {
       "type": "csv",
       "parse": {

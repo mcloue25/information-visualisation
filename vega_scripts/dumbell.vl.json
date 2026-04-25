@@ -9,7 +9,7 @@
         "min": 2000,
         "max": 2023,
         "step": 1,
-        "name": "Start year: "
+        "name": "Start: "
       }
     },
     {
@@ -20,21 +20,21 @@
         "min": 2000,
         "max": 2023,
         "step": 1,
-        "name": "End year: "
+        "name": "End: "
       }
     }
   ],
-  "width": 460,
-  "height": 360,
+  "width": 420,
+  "height": 330,
   "title": {
-    "text": "Who improved most?",
+    "text": "Biggest gains",
     "subtitle": [
-      "Top 10 gains in renewables share between the selected start and end years.",
-      "The dumbbell compares the two chosen years directly and labels the net change."
-    ]
+      "Change between start and end year."
+    ],
+    "anchor": "start"
   },
   "data": {
-    "url": "../../data/results/data/energy_improver_pairs.csv",
+    "url": "../data/results/data/energy_improver_pairs.csv",
     "format": {
       "type": "csv",
       "parse": {
@@ -109,7 +109,8 @@
         "align": "left",
         "baseline": "middle",
         "fontSize": 11,
-        "color": "#333333"
+        "color": "#333333",
+        "fontWeight": "normal"
       },
       "encoding": {
         "x": {
@@ -140,8 +141,8 @@
           "type": "quantitative",
           "scale": {
             "domain": [
-              -34,
-              62
+              -35,
+              65
             ]
           },
           "title": null,
@@ -229,7 +230,8 @@
         "baseline": "middle",
         "dx": 22,
         "fontSize": 11,
-        "color": "#2E7D57"
+        "color": "#2E7D57",
+        "fontWeight": "normal"
       },
       "encoding": {
         "x": {
@@ -251,25 +253,26 @@
     "title": {
       "anchor": "start",
       "fontSize": 18,
-      "fontWeight": "normal",
+      "fontWeight": "bold",
+      "color": "#1F2933",
       "subtitleFontSize": 11,
-      "subtitleColor": "#666",
+      "subtitleColor": "#5F6B66",
       "offset": 8
     },
     "axis": {
       "labelFontSize": 11,
       "titleFontSize": 12,
-      "domainColor": "#999",
-      "tickColor": "#999",
-      "gridColor": "#E6E6E6",
-      "labelColor": "#333",
-      "titleColor": "#333"
+      "domainColor": "#B8C0BC",
+      "tickColor": "#B8C0BC",
+      "gridColor": "#E9ECEA",
+      "labelColor": "#1F2933",
+      "titleColor": "#1F2933"
     },
     "legend": {
       "labelFontSize": 11,
       "titleFontSize": 12,
-      "labelColor": "#333",
-      "titleColor": "#333"
+      "labelColor": "#1F2933",
+      "titleColor": "#1F2933"
     }
   }
 }

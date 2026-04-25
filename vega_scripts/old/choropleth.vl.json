@@ -1,0 +1,148 @@
+{
+  "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
+  "width": 900,
+  "height": 430,
+  "title": {
+    "text": "Where are countries moving away from fossil fuels?",
+    "subtitle": [
+      "Colour shows the change in fossil fuel share of primary energy from 2000 to latest year.",
+      "Darker green means a larger reduction in fossil fuel dependence."
+    ]
+  },
+  "projection": {
+    "type": "equalEarth"
+  },
+  "layer": [
+    {
+      "data": {
+        "url": "https://vega.github.io/vega-datasets/data/world-110m.json",
+        "format": {
+          "type": "topojson",
+          "feature": "countries"
+        }
+      },
+      "mark": {
+        "type": "geoshape",
+        "fill": "#F1F1F1",
+        "stroke": "white",
+        "strokeWidth": 0.4
+      }
+    },
+    {
+      "data": {
+        "url": "https://vega.github.io/vega-datasets/data/world-110m.json",
+        "format": {
+          "type": "topojson",
+          "feature": "countries"
+        }
+      },
+      "transform": [
+        {
+          "lookup": "id",
+          "from": {
+            "data": {
+              "url": "../data/results/data/energy_fossil_reduction_map.csv",
+              "format": {
+                "type": "csv",
+                "parse": {
+                  "iso_numeric": "number",
+                  "fossil_share_energy_start": "number",
+                  "fossil_share_energy_latest": "number",
+                  "fossil_reduction": "number",
+                  "renewables_share_energy_latest": "number",
+                  "population_latest": "number",
+                  "start_year": "number",
+                  "latest_year": "number"
+                }
+              }
+            },
+            "key": "iso_numeric",
+            "fields": [
+              "country",
+              "iso_code",
+              "start_year",
+              "latest_year",
+              "fossil_share_energy_start",
+              "fossil_share_energy_latest",
+              "fossil_reduction",
+              "renewables_share_energy_latest",
+              "population_latest"
+            ]
+          }
+        },
+        {
+          "filter": "isValid(datum.fossil_reduction)"
+        }
+      ],
+      "mark": {
+        "type": "geoshape",
+        "stroke": "white",
+        "strokeWidth": 0.4
+      },
+      "encoding": {
+        "color": {
+          "field": "fossil_reduction",
+          "type": "quantitative",
+          "title": "Fossil fuel reduction as %",
+          "scale": {
+            "scheme": "greens"
+          }
+        },
+        "tooltip": [
+          {
+            "field": "country",
+            "type": "nominal",
+            "title": "Country"
+          },
+          {
+            "field": "fossil_share_energy_start",
+            "type": "quantitative",
+            "format": ".1f",
+            "title": "Fossil share in 2000 (%)"
+          },
+          {
+            "field": "fossil_share_energy_latest",
+            "type": "quantitative",
+            "format": ".1f",
+            "title": "Latest fossil share (%)"
+          },
+          {
+            "field": "fossil_reduction",
+            "type": "quantitative",
+            "format": "+.1f",
+            "title": "Reduction"
+          },
+          {
+            "field": "renewables_share_energy_latest",
+            "type": "quantitative",
+            "format": ".1f",
+            "title": "Latest renewables share (%)"
+          }
+        ]
+      }
+    }
+  ],
+  "config": {
+    "background": "white",
+    "view": {
+      "stroke": null
+    },
+    "font": "Inter, Arial, sans-serif",
+    "title": {
+      "anchor": "start",
+      "fontSize": 20,
+      "fontWeight": "normal",
+      "subtitleFontSize": 12,
+      "subtitleColor": "#666"
+    },
+    "legend": {
+      "orient": "right",
+      "direction": "vertical",
+      "gradientLength": 300,
+      "gradientThickness": 12,
+      "titleOrient": "left",
+      "labelFontSize": 11,
+      "titleFontSize": 12
+    }
+  }
+}

@@ -1,17 +1,22 @@
 import os
-import numpy as np
+from typing import List, Optional
+
 import pandas as pd
-import matplotlib.pyplot as plt
+
+try:
+    import pycountry
+except ImportError:  # Map export still runs, but choropleth join IDs are omitted.
+    pycountry = None
 
 
 DATA_PATH = "data/csv/owid-energy-data.csv"
 OUT_DIR = "data/results"
-PLOT_DIR = os.path.join(OUT_DIR, "plots")
 DATA_OUT_DIR = os.path.join(OUT_DIR, "data")
 
 START_YEAR = 2000
-LATEST_YEAR = 2023
+MIN_POPULATION = 1_000_000
 
+# Countries kept for detailed comparison panels.
 FOCUS_COUNTRIES = [
     "Ireland",
     "United Kingdom",
@@ -20,7 +25,10 @@ FOCUS_COUNTRIES = [
     "China",
     "India",
     "United States",
-    "Brazil"
+    "Brazil",
+    "Iceland",
+    "Norway",
+    "Sweden",
 ]
 
 KEY_COLUMNS = [
@@ -43,404 +51,350 @@ KEY_COLUMNS = [
     "coal_share_elec",
     "gas_share_elec",
     "oil_share_elec",
-    "carbon_intensity_elec"
+    "carbon_intensity_elec",
 ]
 
 
-def ensure_dirs():
-    os.makedirs(PLOT_DIR, exist_ok=True)
+def ensure_dirs() -> None:
     os.makedirs(DATA_OUT_DIR, exist_ok=True)
 
 
-def load_data(path):
+def load_data(path: str) -> pd.DataFrame:
     df = pd.read_csv(path, low_memory=False)
-    missing = [c for c in KEY_COLUMNS if c not in df.columns]
+    missing = [col for col in KEY_COLUMNS if col not in df.columns]
     if missing:
         raise ValueError(f"Missing columns: {missing}")
     return df[KEY_COLUMNS].copy()
 
 
-def keep_countries(df):
-    df = df[df["iso_code"].notna()].copy()
-    df = df[df["iso_code"].str.len() == 3].copy()
-    return df
-
-
-def clean_data(df):
-    df = keep_countries(df)
-    df = df[df["year"] >= START_YEAR].copy()
-
-    for col in KEY_COLUMNS:
-        if col not in {"country", "iso_code"}:
-            df[col] = pd.to_numeric(df[col], errors="coerce")
-
-    df["gdp_per_capita"] = df["gdp"] / df["population"]
-    df["renewable_vs_fossil_gap_energy"] = df["renewables_share_energy"] - df["fossil_share_energy"]
-    df["renewable_vs_fossil_gap_elec"] = df["renewables_share_elec"] - df["fossil_share_elec"]
-    df["solar_wind_share_elec"] = df["solar_share_elec"].fillna(0) + df["wind_share_elec"].fillna(0)
-    df["clean_share_elec"] = (
-        df["renewables_share_elec"].fillna(0) + df["nuclear_share_elec"].fillna(0)
-    )
-
-    return df
-
-
-def add_change_features(df):
-    base = df[["country", "year", "renewables_share_energy", "fossil_share_energy", "carbon_intensity_elec"]].copy()
-
-    base_2000 = (
-        base[base["year"] == START_YEAR]
-        .rename(columns={
-            "renewables_share_energy": "renewables_share_energy_2000",
-            "fossil_share_energy": "fossil_share_energy_2000",
-            "carbon_intensity_elec": "carbon_intensity_elec_2000"
-        })
-        .drop(columns=["year"])
-    )
-
-    base_latest = (
-        base[base["year"] == LATEST_YEAR]
-        .rename(columns={
-            "renewables_share_energy": "renewables_share_energy_latest",
-            "fossil_share_energy": "fossil_share_energy_latest",
-            "carbon_intensity_elec": "carbon_intensity_elec_latest"
-        })
-        .drop(columns=["year"])
-    )
-
-    delta = base_latest.merge(base_2000, on="country", how="inner")
-    delta["renewables_share_energy_change"] = (
-        delta["renewables_share_energy_latest"] - delta["renewables_share_energy_2000"]
-    )
-    delta["fossil_share_energy_change"] = (
-        delta["fossil_share_energy_latest"] - delta["fossil_share_energy_2000"]
-    )
-    delta["carbon_intensity_change"] = (
-        delta["carbon_intensity_elec_latest"] - delta["carbon_intensity_elec_2000"]
-    )
-
-    return df.merge(delta, on="country", how="left")
-
-
-def make_latest_snapshot(df):
-    latest = df[df["year"] == LATEST_YEAR].copy()
-    latest = latest.dropna(subset=["renewables_share_energy", "fossil_share_energy", "population"])
-    latest = latest.sort_values("renewables_share_energy", ascending=False)
-    return latest
-
-
-def make_focus_countries(df):
-    return df[df["country"].isin(FOCUS_COUNTRIES)].copy()
-
-
-def make_energy_mix_long(df):
-    mix_cols = [
-        "coal_share_elec",
-        "gas_share_elec",
-        "oil_share_elec",
-        "hydro_share_elec",
-        "wind_share_elec",
-        "solar_share_elec",
-        "nuclear_share_elec"
-    ]
-
-    mix = df[["country", "year"] + mix_cols].copy()
-    mix = mix.melt(
-        id_vars=["country", "year"],
-        value_vars=mix_cols,
-        var_name="source",
-        value_name="share"
-    )
-    mix["source"] = mix["source"].str.replace("_share_elec", "", regex=False)
-    return mix
-
-
-def make_top_improvers(df, n=15):
-    latest = make_latest_snapshot(df)
-
-    cols = [
-        "country",
-        "population",
-        "renewables_share_energy_2000",
-        "renewables_share_energy_latest",
-        "renewables_share_energy_change"
-    ]
-
-    out = latest[cols].copy()
-
-    out = out.dropna(subset=[
-        "population",
-        "renewables_share_energy_2000",
-        "renewables_share_energy_latest",
-        "renewables_share_energy_change"
-    ])
-
-    out = out[out["population"] >= 1_000_000]
-    out = out.sort_values("renewables_share_energy_change", ascending=False).head(n)
-
+def keep_countries(df: pd.DataFrame) -> pd.DataFrame:
+    """Keep normal country rows and remove aggregate regions."""
+    out = df[df["iso_code"].notna()].copy()
+    out = out[out["iso_code"].str.len() == 3].copy()
     return out
 
 
-def save_outputs(df, latest, focus, mix_long, improvers):
-    df.to_csv(os.path.join(DATA_OUT_DIR, "energy_master.csv"), index=False)
-    latest.to_csv(os.path.join(DATA_OUT_DIR, "energy_latest_snapshot.csv"), index=False)
-    focus.to_csv(os.path.join(DATA_OUT_DIR, "energy_focus_countries.csv"), index=False)
-    mix_long.to_csv(os.path.join(DATA_OUT_DIR, "energy_mix_long.csv"), index=False)
-    improvers.to_csv(os.path.join(DATA_OUT_DIR, "energy_top_improvers.csv"), index=False)
+def iso3_to_numeric(iso3: str) -> Optional[int]:
+    """Convert ISO-3 country codes to numeric IDs used by Vega world TopoJSON."""
+    if pycountry is None or pd.isna(iso3):
+        return None
+
+    country = pycountry.countries.get(alpha_3=iso3)
+    if country is None:
+        return None
+
+    return int(country.numeric)
 
 
-def plot_scatter_latest(latest):
-    plot_df = latest.dropna(subset=["renewables_share_energy", "fossil_share_energy", "population"]).copy()
-    plot_df = plot_df[plot_df["population"] >= 1_000_000]
+def clean_data(df: pd.DataFrame, start_year: int = START_YEAR) -> pd.DataFrame:
+    df = keep_countries(df)
+    df = df[df["year"] >= start_year].copy()
 
-    sizes = np.sqrt(plot_df["population"]) / 150
+    numeric_cols = [col for col in KEY_COLUMNS if col not in {"country", "iso_code"}]
+    df[numeric_cols] = df[numeric_cols].apply(pd.to_numeric, errors="coerce")
 
-    fig, ax = plt.subplots(figsize=(11, 7))
-    ax.scatter(
-        plot_df["fossil_share_energy"],
-        plot_df["renewables_share_energy"],
-        s=sizes,
-        alpha=0.7
+    df["gdp_per_capita"] = df["gdp"] / df["population"]
+    df["renewable_vs_fossil_gap_energy"] = (
+        df["renewables_share_energy"] - df["fossil_share_energy"]
+    )
+    df["renewable_vs_fossil_gap_elec"] = (
+        df["renewables_share_elec"] - df["fossil_share_elec"]
+    )
+    df["solar_wind_share_elec"] = (
+        df["solar_share_elec"].fillna(0) + df["wind_share_elec"].fillna(0)
+    )
+    df["clean_share_elec"] = (
+        df["renewables_share_elec"].fillna(0) + df["nuclear_share_elec"].fillna(0)
+    )
+    df["transition_gap"] = df["clean_share_elec"] - df["fossil_share_elec"]
+
+    return df
+
+
+def make_dashboard_yearly(
+    df: pd.DataFrame,
+    min_population: int = MIN_POPULATION,
+) -> pd.DataFrame:
+    """One row per country-year for interactive dashboard charts."""
+    cols = [
+        "country",
+        "year",
+        "iso_code",
+        "population",
+        "renewables_share_energy",
+        "fossil_share_energy",
+        "clean_share_elec",
+        "fossil_share_elec",
+        "transition_gap",
+        "carbon_intensity_elec",
+    ]
+
+    out = df[cols].copy()
+    out = out.dropna(
+        subset=[
+            "country",
+            "year",
+            "population",
+            "renewables_share_energy",
+            "fossil_share_energy",
+        ]
+    )
+    out = out[out["population"] >= min_population].copy()
+    out["is_focus_country"] = out["country"].isin(FOCUS_COUNTRIES)
+
+    return out.sort_values(["year", "renewables_share_energy"], ascending=[True, False])
+
+
+def make_story_countries_yearly(df: pd.DataFrame) -> pd.DataFrame:
+    """Small time-series dataset for directly labelled line charts."""
+    cols = [
+        "country",
+        "year",
+        "population",
+        "renewables_share_energy",
+        "fossil_share_energy",
+        "clean_share_elec",
+        "fossil_share_elec",
+        "transition_gap",
+    ]
+
+    out = df[df["country"].isin(FOCUS_COUNTRIES)][cols].copy()
+    out = out.dropna(subset=["year", "clean_share_elec", "fossil_share_elec"])
+    return out.sort_values(["country", "year"])
+
+
+def make_latest_snapshot(dashboard_yearly: pd.DataFrame) -> pd.DataFrame:
+    latest_year = int(dashboard_yearly["year"].max())
+    latest = dashboard_yearly[dashboard_yearly["year"] == latest_year].copy()
+    latest = latest.dropna(
+        subset=["renewables_share_energy", "fossil_share_energy", "population"]
+    )
+    return latest.sort_values("renewables_share_energy", ascending=False)
+
+
+def build_pairwise_changes_for_years(
+    dashboard_yearly: pd.DataFrame,
+    start_year: int,
+    end_year: int,
+) -> pd.DataFrame:
+    """Compare renewable share between two selected years."""
+    if start_year == end_year:
+        raise ValueError("start_year and end_year must differ")
+
+    start_df = dashboard_yearly[dashboard_yearly["year"] == start_year][
+        ["country", "iso_code", "renewables_share_energy", "population"]
+    ].rename(
+        columns={
+            "renewables_share_energy": "renewables_share_energy_start",
+            "population": "population_start",
+        }
     )
 
-    for _, row in plot_df[plot_df["country"].isin(FOCUS_COUNTRIES)].iterrows():
-        ax.annotate(
-            row["country"],
-            (row["fossil_share_energy"], row["renewables_share_energy"]),
-            fontsize=8,
-            xytext=(4, 4),
-            textcoords="offset points"
-        )
-
-    ax.set_title(f"Renewables vs Fossil Share of Primary Energy ({LATEST_YEAR})")
-    ax.set_xlabel("Fossil share of primary energy (%)")
-    ax.set_ylabel("Renewables share of primary energy (%)")
-    plt.tight_layout()
-    plt.savefig(os.path.join(PLOT_DIR, "scatter_latest.png"), dpi=300)
-    plt.close()
-
-
-def plot_focus_lines(focus):
-    plot_df = focus.dropna(subset=["renewables_share_energy"]).copy()
-
-    fig, ax = plt.subplots(figsize=(11, 7))
-    for country in FOCUS_COUNTRIES:
-        sub = plot_df[plot_df["country"] == country].sort_values("year")
-        if not sub.empty:
-            ax.plot(sub["year"], sub["renewables_share_energy"], label=country)
-
-    ax.set_title("Renewables Share of Primary Energy Over Time")
-    ax.set_xlabel("Year")
-    ax.set_ylabel("Renewables share of primary energy (%)")
-    ax.legend(ncols=2, fontsize=8)
-    plt.tight_layout()
-    plt.savefig(os.path.join(PLOT_DIR, "focus_lines_renewables.png"), dpi=300)
-    plt.close()
-
-
-def plot_focus_clean_vs_fossil(focus):
-    plot_df = focus.dropna(subset=["clean_share_elec", "fossil_share_elec"]).copy()
-
-    fig, ax = plt.subplots(figsize=(11, 7))
-    for country in FOCUS_COUNTRIES:
-        sub = plot_df[plot_df["country"] == country].sort_values("year")
-        if not sub.empty:
-            ax.plot(sub["year"], sub["clean_share_elec"] - sub["fossil_share_elec"], label=country)
-
-    ax.axhline(0, linewidth=1)
-    ax.set_title("Electricity Transition Gap: Clean Share Minus Fossil Share")
-    ax.set_xlabel("Year")
-    ax.set_ylabel("Gap in percentage points")
-    ax.legend(ncols=2, fontsize=8)
-    plt.tight_layout()
-    plt.savefig(os.path.join(PLOT_DIR, "focus_lines_clean_vs_fossil.png"), dpi=300)
-    plt.close()
-
-
-def plot_heatmap_focus(mix_long):
-    heat = (
-        mix_long[mix_long["country"].isin(FOCUS_COUNTRIES)]
-        .pivot_table(index="country", columns="year", values="share", aggfunc="sum")
-        .sort_index()
+    end_df = dashboard_yearly[dashboard_yearly["year"] == end_year][
+        ["country", "iso_code", "renewables_share_energy", "population"]
+    ].rename(
+        columns={
+            "renewables_share_energy": "renewables_share_energy_end",
+            "population": "population_end",
+        }
     )
 
-    fig, ax = plt.subplots(figsize=(12, 6))
-    im = ax.imshow(heat.values, aspect="auto")
+    out = start_df.merge(end_df, on=["country", "iso_code"], how="inner")
+    out["start_year"] = start_year
+    out["end_year"] = end_year
+    out["renewables_share_energy_change"] = (
+        out["renewables_share_energy_end"] - out["renewables_share_energy_start"]
+    )
 
-    ax.set_title("Electricity Mix Intensity Across Focus Countries")
-    ax.set_xlabel("Year")
-    ax.set_ylabel("Country")
-    ax.set_xticks(range(len(heat.columns)))
-    ax.set_xticklabels(heat.columns, rotation=45)
-    ax.set_yticks(range(len(heat.index)))
-    ax.set_yticklabels(heat.index)
+    out = out.dropna(
+        subset=[
+            "renewables_share_energy_start",
+            "renewables_share_energy_end",
+            "renewables_share_energy_change",
+        ]
+    )
+    out = out[out["population_end"] >= MIN_POPULATION].copy()
 
-    cbar = plt.colorbar(im)
-    cbar.set_label("Share of electricity (%)")
-
-    plt.tight_layout()
-    plt.savefig(os.path.join(PLOT_DIR, "heatmap_focus.png"), dpi=300)
-    plt.close()
-
-
-def plot_top_improvers(improvers):
-
-    print(improvers.shape)
-    print(improvers.head())
-
-    plot_df = improvers.sort_values(
+    cols = [
+        "country",
+        "iso_code",
+        "start_year",
+        "end_year",
+        "renewables_share_energy_start",
+        "renewables_share_energy_end",
         "renewables_share_energy_change",
-        ascending=False
-    ).reset_index(drop=True)
-
-    y = np.arange(len(plot_df))
-
-    fig, ax = plt.subplots(figsize=(11, 8))
-
-    ax.hlines(
-        y=y,
-        xmin=plot_df["renewables_share_energy_2000"],
-        xmax=plot_df["renewables_share_energy_latest"],
-        linewidth=2
+        "population_start",
+        "population_end",
+    ]
+    return out[cols].sort_values(
+        ["start_year", "end_year", "renewables_share_energy_change"],
+        ascending=[True, True, False],
     )
 
-    print(plot_df) 
-    ax.scatter(plot_df["renewables_share_energy_2000"], y, s=40, label=str(START_YEAR))
-    ax.scatter(plot_df["renewables_share_energy_latest"], y, s=40, label=str(LATEST_YEAR))
 
-    ax.set_yticks(y)
-    ax.set_yticklabels(plot_df["country"])
-
-    ax.invert_yaxis()
-
-    ax.set_xlabel("Renewables share of primary energy (%)")
-    ax.set_title(f"Top {len(plot_df)} Improvers in Renewables Share")
-
-    ax.legend()
-    plt.tight_layout()
-    plt.savefig(os.path.join(PLOT_DIR, "top_improvers.png"), dpi=300)
-    plt.close()
+def make_top_improvers_fixed(
+    dashboard_yearly: pd.DataFrame,
+    start_year: int,
+    end_year: int,
+    n: int = 15,
+) -> pd.DataFrame:
+    pairs = build_pairwise_changes_for_years(dashboard_yearly, start_year, end_year)
+    return pairs.sort_values("renewables_share_energy_change", ascending=False).head(n)
 
 
+def make_all_year_pairs(dashboard_yearly: pd.DataFrame) -> pd.DataFrame:
+    years = sorted(int(year) for year in dashboard_yearly["year"].dropna().unique())
+    parts: List[pd.DataFrame] = []
 
-def plot_latest_leaders(latest, n=15):
+    for start_year in years:
+        for end_year in years:
+            if end_year > start_year:
+                parts.append(build_pairwise_changes_for_years(dashboard_yearly, start_year, end_year))
 
-    plot_df = latest.sort_values(
-        "renewables_share_energy",
-        ascending=False
-    ).head(n)
+    if not parts:
+        raise ValueError("No year pairs could be generated")
 
-    fig, ax = plt.subplots(figsize=(11, 8))
+    return pd.concat(parts, ignore_index=True)
 
-    ax.barh(
-        plot_df["country"],
-        plot_df["renewables_share_energy"]
+
+def make_fossil_reduction_map(
+    dashboard_yearly: pd.DataFrame,
+    start_year: int,
+    end_year: int,
+) -> pd.DataFrame:
+    """Country-level fossil reduction for the choropleth map."""
+    start_df = dashboard_yearly[dashboard_yearly["year"] == start_year][
+        ["country", "iso_code", "fossil_share_energy", "population"]
+    ].rename(
+        columns={
+            "fossil_share_energy": "fossil_share_energy_start",
+            "population": "population_start",
+        }
     )
 
-    ax.invert_yaxis()
-
-    ax.set_xlabel("Renewables share of primary energy (%)")
-    ax.set_title(f"Top {n} Countries by Renewable Energy Share (Latest Year)")
-
-    plt.tight_layout()
-    plt.savefig(os.path.join(PLOT_DIR, "latest_leaders.png"), dpi=300)
-    plt.close()
-
-
-
-def plot_latest_lollipop(latest, n=15):
-
-    # sort by latest renewable share
-    plot_df = latest.sort_values(
-        "renewables_share_energy",
-        ascending=False
-    ).head(n).reset_index(drop=True)
-
-    # create y positions
-    y = np.arange(len(plot_df))
-
-    values = plot_df["renewables_share_energy"]
-
-    fig, ax = plt.subplots(figsize=(11, 8))
-
-    # draw lines (from 0 to value)
-    ax.hlines(
-        y=y,
-        xmin=0,
-        xmax=values,
-        linewidth=2
+    end_df = dashboard_yearly[dashboard_yearly["year"] == end_year][
+        [
+            "country",
+            "iso_code",
+            "fossil_share_energy",
+            "renewables_share_energy",
+            "population",
+        ]
+    ].rename(
+        columns={
+            "fossil_share_energy": "fossil_share_energy_latest",
+            "renewables_share_energy": "renewables_share_energy_latest",
+            "population": "population_latest",
+        }
     )
 
-    # draw dots
-    ax.scatter(values, y, s=60)
-
-    # labels
-    ax.set_yticks(y)
-    ax.set_yticklabels(plot_df["country"])
-
-    ax.invert_yaxis()
-
-    ax.set_xlabel("Renewables share of primary energy (%)")
-    ax.set_title(f"Top {n} Countries by Renewable Share (Latest Year)")
-
-    plt.tight_layout()
-    plt.savefig(os.path.join(PLOT_DIR, "latest_lollipop.png"), dpi=300)
-    plt.close()
-
-
-def plot_country_mix_area(mix_long, country="Ireland"):
-    sub = mix_long[mix_long["country"] == country].copy()
-    order = ["coal", "gas", "oil", "hydro", "wind", "solar", "nuclear"]
-    sub["source"] = pd.Categorical(sub["source"], categories=order, ordered=True)
-    wide = (
-        sub.pivot(index="year", columns="source", values="share")
-        .fillna(0)
-        .reindex(columns=order)
+    out = start_df.merge(end_df, on=["country", "iso_code"], how="inner")
+    out["start_year"] = start_year
+    out["latest_year"] = end_year
+    out["fossil_reduction"] = (
+        out["fossil_share_energy_start"] - out["fossil_share_energy_latest"]
     )
+    out["iso_numeric"] = out["iso_code"].apply(iso3_to_numeric)
 
-    fig, ax = plt.subplots(figsize=(11, 7))
-    ax.stackplot(wide.index, wide.T, labels=wide.columns)
+    out = out.dropna(
+        subset=[
+            "iso_numeric",
+            "fossil_share_energy_start",
+            "fossil_share_energy_latest",
+            "fossil_reduction",
+        ]
+    )
+    out["iso_numeric"] = out["iso_numeric"].astype(int)
 
-    ax.set_title(f"Electricity Mix Over Time: {country}")
-    ax.set_xlabel("Year")
-    ax.set_ylabel("Share of electricity (%)")
-    ax.legend(loc="center left", bbox_to_anchor=(1.02, 0.5))
-    plt.tight_layout()
-    plt.savefig(os.path.join(PLOT_DIR, f"{country.lower().replace(' ', '_')}_mix_area.png"), dpi=300)
-    plt.close()
+    cols = [
+        "country",
+        "iso_code",
+        "iso_numeric",
+        "start_year",
+        "latest_year",
+        "fossil_share_energy_start",
+        "fossil_share_energy_latest",
+        "fossil_reduction",
+        "renewables_share_energy_latest",
+        "population_start",
+        "population_latest",
+    ]
+    return out[cols].sort_values("fossil_reduction", ascending=False)
 
 
-def main():
-    '''
-    Links:
-        data : https://github.com/owid/energy-data?tab=readme-ov-file
-    '''
+def save_outputs(
+    df: pd.DataFrame,
+    dashboard_yearly: pd.DataFrame,
+    story_yearly: pd.DataFrame,
+    latest_snapshot: pd.DataFrame,
+    top_improvers_fixed: pd.DataFrame,
+    pairwise_changes: pd.DataFrame,
+    fossil_reduction_map: pd.DataFrame,
+) -> None:
+    outputs = {
+        "energy_master.csv": df,
+        "energy_dashboard_yearly.csv": dashboard_yearly,
+        "energy_story_countries.csv": story_yearly,
+        "energy_latest_snapshot.csv": latest_snapshot,
+        "energy_top_improvers.csv": top_improvers_fixed,
+        "energy_improver_pairs.csv": pairwise_changes,
+        "energy_fossil_reduction_map.csv": fossil_reduction_map,
+    }
+
+    for filename, frame in outputs.items():
+        frame.to_csv(os.path.join(DATA_OUT_DIR, filename), index=False)
+
+
+def main() -> None:
     ensure_dirs()
 
-    df = load_data(DATA_PATH)
-    df = clean_data(df)
-    df = add_change_features(df)
+    raw = load_data(DATA_PATH)
+    df = clean_data(raw, start_year=START_YEAR)
 
-    latest = make_latest_snapshot(df)
-    focus = make_focus_countries(df)
-    mix_long = make_energy_mix_long(focus)
-    improvers = make_top_improvers(df, n=15)
-    
-    save_outputs(df, latest, focus, mix_long, improvers)
+    dashboard_yearly = make_dashboard_yearly(df, min_population=MIN_POPULATION)
+    latest_year = int(dashboard_yearly["year"].max())
 
-    plot_scatter_latest(latest)
-    plot_focus_lines(focus)
-    plot_focus_clean_vs_fossil(focus)
-    plot_heatmap_focus(mix_long)
-    plot_top_improvers(improvers)
-    plot_latest_leaders(latest, n=15)
-    plot_latest_lollipop(latest, n=15)
+    story_yearly = make_story_countries_yearly(df)
+    latest_snapshot = make_latest_snapshot(dashboard_yearly)
+    top_improvers_fixed = make_top_improvers_fixed(
+        dashboard_yearly,
+        start_year=START_YEAR,
+        end_year=latest_year,
+        n=15,
+    )
+    pairwise_changes = make_all_year_pairs(dashboard_yearly)
+    fossil_reduction_map = make_fossil_reduction_map(
+        dashboard_yearly,
+        start_year=START_YEAR,
+        end_year=latest_year,
+    )
 
-    plot_country_mix_area(mix_long, country="Ireland")
-    plot_country_mix_area(mix_long, country="Denmark")
+    save_outputs(
+        df=df,
+        dashboard_yearly=dashboard_yearly,
+        story_yearly=story_yearly,
+        latest_snapshot=latest_snapshot,
+        top_improvers_fixed=top_improvers_fixed,
+        pairwise_changes=pairwise_changes,
+        fossil_reduction_map=fossil_reduction_map,
+    )
 
     print("Saved data to:", DATA_OUT_DIR)
-    print("Saved plots to:", PLOT_DIR)
+    print("Latest year found:", latest_year)
+    print("Dashboard yearly rows:", len(dashboard_yearly))
+    print("Pairwise comparison rows:", len(pairwise_changes))
+    print("Fossil reduction map rows:", len(fossil_reduction_map))
+    print("\nFiles created:")
+    print(" - energy_master.csv")
+    print(" - energy_dashboard_yearly.csv")
+    print(" - energy_story_countries.csv")
+    print(" - energy_latest_snapshot.csv")
+    print(" - energy_top_improvers.csv")
+    print(" - energy_improver_pairs.csv")
+    print(" - energy_fossil_reduction_map.csv")
+
+    if pycountry is None:
+        print("\nWarning: install pycountry to generate iso_numeric values for the map.")
 
 
 if __name__ == "__main__":

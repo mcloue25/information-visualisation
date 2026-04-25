@@ -1,0 +1,230 @@
+{
+  "$schema": "https://vega.github.io/schema/vega-lite/v6.json",
+  "params": [
+    {
+      "name": "startYear",
+      "value": 2000,
+      "bind": {
+        "input": "range",
+        "min": 2000,
+        "max": 2023,
+        "step": 1,
+        "name": "Start: "
+      }
+    },
+    {
+      "name": "endYear",
+      "value": 2023,
+      "bind": {
+        "input": "range",
+        "min": 2000,
+        "max": 2023,
+        "step": 1,
+        "name": "End: "
+      }
+    }
+  ],
+  "width": 420,
+  "height": 330,
+  "title": {
+    "text": "Renewable leaders",
+    "subtitle": [
+      "Top 10 by share in end year."
+    ],
+    "anchor": "start"
+  },
+  "data": {
+    "url": "../data/results/data/energy_dashboard_yearly.csv",
+    "format": {
+      "type": "csv",
+      "parse": {
+        "year": "number",
+        "renewables_share_energy": "number"
+      }
+    }
+  },
+  "transform": [
+    {
+      "filter": "datum.year == max(startYear, endYear)"
+    },
+    {
+      "filter": "isValid(datum.renewables_share_energy)"
+    },
+    {
+      "window": [
+        {
+          "op": "rank",
+          "as": "rank"
+        }
+      ],
+      "sort": [
+        {
+          "field": "renewables_share_energy",
+          "order": "descending"
+        }
+      ]
+    },
+    {
+      "filter": "datum.rank <= 10"
+    },
+    {
+      "calculate": "0",
+      "as": "zero"
+    },
+    {
+      "calculate": "format(datum.renewables_share_energy, '.0f') + '%'",
+      "as": "label"
+    }
+  ],
+  "encoding": {
+    "y": {
+      "field": "country",
+      "type": "nominal",
+      "sort": {
+        "field": "renewables_share_energy",
+        "order": "descending"
+      },
+      "title": null,
+      "axis": {
+        "labels": false,
+        "ticks": false,
+        "domain": false
+      }
+    }
+  },
+  "layer": [
+    {
+      "mark": {
+        "type": "text",
+        "align": "left",
+        "baseline": "middle",
+        "fontSize": 11,
+        "color": "#333333",
+        "fontWeight": "normal"
+      },
+      "encoding": {
+        "x": {
+          "value": 0
+        },
+        "y": {
+          "field": "country",
+          "type": "nominal",
+          "sort": {
+            "field": "renewables_share_energy",
+            "order": "descending"
+          }
+        },
+        "text": {
+          "field": "country"
+        }
+      }
+    },
+    {
+      "mark": {
+        "type": "rule",
+        "strokeWidth": 1,
+        "color": "#DDE5DF"
+      },
+      "encoding": {
+        "x": {
+          "field": "zero",
+          "type": "quantitative",
+          "scale": {
+            "domain": [
+              -35,
+              90
+            ]
+          },
+          "title": null,
+          "axis": {
+            "labels": false,
+            "ticks": false,
+            "domain": false,
+            "grid": false
+          }
+        },
+        "x2": {
+          "field": "renewables_share_energy"
+        }
+      }
+    },
+    {
+      "mark": {
+        "type": "point",
+        "filled": true,
+        "size": 90,
+        "color": "#2E7D57"
+      },
+      "encoding": {
+        "x": {
+          "field": "renewables_share_energy",
+          "type": "quantitative"
+        },
+        "tooltip": [
+          {
+            "field": "country",
+            "type": "nominal",
+            "title": "Country"
+          },
+          {
+            "field": "renewables_share_energy",
+            "type": "quantitative",
+            "format": ".1f",
+            "title": "Renewables share (%)"
+          }
+        ]
+      }
+    },
+    {
+      "mark": {
+        "type": "text",
+        "align": "left",
+        "baseline": "middle",
+        "dx": 8,
+        "fontSize": 11,
+        "color": "#2E7D57",
+        "fontWeight": "normal"
+      },
+      "encoding": {
+        "x": {
+          "field": "renewables_share_energy",
+          "type": "quantitative"
+        },
+        "text": {
+          "field": "label"
+        }
+      }
+    }
+  ],
+  "config": {
+    "background": "white",
+    "view": {
+      "stroke": null
+    },
+    "font": "Inter, Arial, sans-serif",
+    "title": {
+      "anchor": "start",
+      "fontSize": 18,
+      "fontWeight": "bold",
+      "color": "#1F2933",
+      "subtitleFontSize": 11,
+      "subtitleColor": "#5F6B66",
+      "offset": 8
+    },
+    "axis": {
+      "labelFontSize": 11,
+      "titleFontSize": 12,
+      "domainColor": "#B8C0BC",
+      "tickColor": "#B8C0BC",
+      "gridColor": "#E9ECEA",
+      "labelColor": "#1F2933",
+      "titleColor": "#1F2933"
+    },
+    "legend": {
+      "labelFontSize": 11,
+      "titleFontSize": 12,
+      "labelColor": "#1F2933",
+      "titleColor": "#1F2933"
+    }
+  }
+}
