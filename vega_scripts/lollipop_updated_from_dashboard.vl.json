@@ -2,53 +2,61 @@
   "$schema": "https://vega.github.io/schema/vega-lite/v6.json",
   "params": [
     {
-      "name": "startYear",
+      "name": "startYearInput",
       "value": 2000,
       "bind": {
         "input": "range",
         "min": 2000,
         "max": 2023,
         "step": 1,
-        "name": "Start: "
+        "name": "START YEAR: "
       }
     },
     {
-      "name": "endYear",
+      "name": "endYearInput",
       "value": 2023,
       "bind": {
         "input": "range",
         "min": 2000,
         "max": 2023,
         "step": 1,
-        "name": "End: "
+        "name": "END YEAR:   "
       }
+    },
+    {
+      "name": "startYear",
+      "expr": "startYearInput == endYearInput ? (startYearInput == 2000 ? 2000 : startYearInput - 1) : min(startYearInput, endYearInput)"
+    },
+    {
+      "name": "endYear",
+      "expr": "startYearInput == endYearInput ? (endYearInput == 2000 ? 2001 : endYearInput) : max(startYearInput, endYearInput)"
     }
   ],
   "width": 420,
   "height": 330,
   "title": {
-    "text": "Biggest gains",
+    "text": "Renewable leaders",
     "subtitle": [
-      "Change between start and end year."
+      "Top 10 by share"
     ],
-    "anchor": "start"
+    "anchor": "middle"
   },
   "data": {
-    "url": "../data/results/data/energy_improver_pairs.csv",
+    "url": "../data/results/data/energy_dashboard_yearly.csv",
     "format": {
       "type": "csv",
       "parse": {
-        "start_year": "number",
-        "end_year": "number",
-        "renewables_share_energy_start": "number",
-        "renewables_share_energy_end": "number",
-        "renewables_share_energy_change": "number"
+        "year": "number",
+        "renewables_share_energy": "number"
       }
     }
   },
   "transform": [
     {
-      "filter": "datum.start_year == min(startYear, endYear) && datum.end_year == max(startYear, endYear)"
+      "filter": "datum.year == max(startYear, endYear)"
+    },
+    {
+      "filter": "isValid(datum.renewables_share_energy)"
     },
     {
       "window": [
@@ -59,7 +67,7 @@
       ],
       "sort": [
         {
-          "field": "renewables_share_energy_change",
+          "field": "renewables_share_energy",
           "order": "descending"
         }
       ]
@@ -68,22 +76,12 @@
       "filter": "datum.rank <= 10"
     },
     {
-      "calculate": "(datum.renewables_share_energy_change >= 0 ? '+' : '') + format(datum.renewables_share_energy_change, '.0f') + ' pts'",
-      "as": "change_label"
+      "calculate": "0",
+      "as": "zero"
     },
     {
-      "fold": [
-        "renewables_share_energy_start",
-        "renewables_share_energy_end"
-      ],
-      "as": [
-        "year_type",
-        "value"
-      ]
-    },
-    {
-      "calculate": "datum.year_type === 'renewables_share_energy_start' ? 'start' : 'end'",
-      "as": "year_label"
+      "calculate": "format(datum.renewables_share_energy, '.0f') + '%'",
+      "as": "label"
     }
   ],
   "encoding": {
@@ -91,7 +89,7 @@
       "field": "country",
       "type": "nominal",
       "sort": {
-        "field": "renewables_share_energy_change",
+        "field": "renewables_share_energy",
         "order": "descending"
       },
       "title": null,
@@ -120,7 +118,7 @@
           "field": "country",
           "type": "nominal",
           "sort": {
-            "field": "renewables_share_energy_change",
+            "field": "renewables_share_energy",
             "order": "descending"
           }
         },
@@ -132,17 +130,17 @@
     {
       "mark": {
         "type": "rule",
-        "strokeWidth": 1.2,
-        "color": "#D9D9D9"
+        "strokeWidth": 1,
+        "color": "#DDE5DF"
       },
       "encoding": {
         "x": {
-          "field": "renewables_share_energy_start",
+          "field": "zero",
           "type": "quantitative",
           "scale": {
             "domain": [
               -35,
-              65
+              90
             ]
           },
           "title": null,
@@ -154,7 +152,7 @@
           }
         },
         "x2": {
-          "field": "renewables_share_energy_end"
+          "field": "renewables_share_energy"
         }
       }
     },
@@ -162,27 +160,13 @@
       "mark": {
         "type": "point",
         "filled": true,
-        "size": 70
+        "size": 90,
+        "color": "#2E7D57"
       },
       "encoding": {
         "x": {
-          "field": "value",
+          "field": "renewables_share_energy",
           "type": "quantitative"
-        },
-        "color": {
-          "field": "year_label",
-          "type": "nominal",
-          "scale": {
-            "domain": [
-              "start",
-              "end"
-            ],
-            "range": [
-              "#A0A0A0",
-              "#2E7D57"
-            ]
-          },
-          "legend": null
         },
         "tooltip": [
           {
@@ -191,34 +175,10 @@
             "title": "Country"
           },
           {
-            "field": "start_year",
-            "type": "quantitative",
-            "title": "Start year",
-            "format": ".0f"
-          },
-          {
-            "field": "renewables_share_energy_start",
+            "field": "renewables_share_energy",
             "type": "quantitative",
             "format": ".1f",
-            "title": "Start value (%)"
-          },
-          {
-            "field": "end_year",
-            "type": "quantitative",
-            "title": "End year",
-            "format": ".0f"
-          },
-          {
-            "field": "renewables_share_energy_end",
-            "type": "quantitative",
-            "format": ".1f",
-            "title": "End value (%)"
-          },
-          {
-            "field": "renewables_share_energy_change",
-            "type": "quantitative",
-            "format": ".1f",
-            "title": "Change (pp)"
+            "title": "Renewables share (%)"
           }
         ]
       }
@@ -228,18 +188,18 @@
         "type": "text",
         "align": "left",
         "baseline": "middle",
-        "dx": 22,
+        "dx": 8,
         "fontSize": 11,
         "color": "#2E7D57",
         "fontWeight": "normal"
       },
       "encoding": {
         "x": {
-          "field": "renewables_share_energy_end",
+          "field": "renewables_share_energy",
           "type": "quantitative"
         },
         "text": {
-          "field": "change_label"
+          "field": "label"
         }
       }
     }

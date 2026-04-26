@@ -4,10 +4,8 @@
   "height": 520,
   "title": {
     "text": "Fossil-fuel reduction by country",
-    "subtitle": [
-      "Darker green = larger fall in fossil-fuel share."
-    ],
-    "anchor": "start"
+    "anchor": "middle",
+    "dx": 60
   },
   "projection": {
     "type": "equalEarth"

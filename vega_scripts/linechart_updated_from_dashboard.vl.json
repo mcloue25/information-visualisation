@@ -2,26 +2,34 @@
   "$schema": "https://vega.github.io/schema/vega-lite/v6.json",
   "params": [
     {
-      "name": "startYear",
+      "name": "startYearInput",
       "value": 2000,
       "bind": {
         "input": "range",
         "min": 2000,
         "max": 2023,
         "step": 1,
-        "name": "Start: "
+        "name": "START YEAR: "
       }
     },
     {
-      "name": "endYear",
+      "name": "endYearInput",
       "value": 2023,
       "bind": {
         "input": "range",
         "min": 2000,
         "max": 2023,
         "step": 1,
-        "name": "End: "
+        "name": "END YEAR:   "
       }
+    },
+    {
+      "name": "startYear",
+      "expr": "startYearInput == endYearInput ? (startYearInput == 2000 ? 2000 : startYearInput - 1) : min(startYearInput, endYearInput)"
+    },
+    {
+      "name": "endYear",
+      "expr": "startYearInput == endYearInput ? (endYearInput == 2000 ? 2001 : endYearInput) : max(startYearInput, endYearInput)"
     }
   ],
   "width": 1320,
@@ -29,9 +37,9 @@
   "title": {
     "text": "Transition paths over time",
     "subtitle": [
-      "Clean electricity share minus fossil share."
+      "Hydro leaders cluster near the top; Denmark shows rapid catch up"
     ],
-    "anchor": "start"
+    "anchor": "middle"
   },
   "data": {
     "url": "../data/results/data/energy_story_countries.csv",
@@ -76,6 +84,9 @@
               -100,
               110
             ]
+          },
+          "axis": {
+            "grid": false
           }
         }
       }
@@ -89,7 +100,12 @@
         "x": {
           "field": "year",
           "type": "quantitative",
-          "title": "Year"
+          "title": "Year",
+          "axis": {
+            "format": "d",
+            "grid": false,
+            "tickCount": 8
+          }
         },
         "y": {
           "field": "transition_gap",
@@ -100,6 +116,9 @@
               -100,
               110
             ]
+          },
+          "axis": {
+            "grid": false
           }
         },
         "color": {
@@ -159,7 +178,12 @@
       "encoding": {
         "x": {
           "field": "year",
-          "type": "quantitative"
+          "type": "quantitative",
+          "axis": {
+            "format": "d",
+            "grid": false,
+            "tickCount": 8
+          }
         },
         "y": {
           "field": "transition_gap",
@@ -169,6 +193,9 @@
               -100,
               110
             ]
+          },
+          "axis": {
+            "grid": false
           }
         },
         "color": {
@@ -219,20 +246,29 @@
         {
           "calculate": "datum.transition_gap + (datum.country == 'Iceland' ? 8 : datum.country == 'Norway' ? 3 : datum.country == 'Sweden' ? -3 : datum.country == 'Denmark' ? 5 : datum.country == 'Ireland' ? 0 : datum.country == 'India' ? -4 : 0)",
           "as": "label_y"
+        },
+        {
+          "calculate": "datum.country + '  ' + format(datum.transition_gap, '+.0f') + ' pp'",
+          "as": "label_text"
         }
       ],
       "mark": {
         "type": "text",
         "align": "left",
         "baseline": "middle",
-        "dx": 8,
+        "dx": 10,
         "fontSize": 11,
         "fontWeight": "bold"
       },
       "encoding": {
         "x": {
           "field": "year",
-          "type": "quantitative"
+          "type": "quantitative",
+          "axis": {
+            "format": "d",
+            "grid": false,
+            "tickCount": 8
+          }
         },
         "y": {
           "field": "label_y",
@@ -242,10 +278,13 @@
               -100,
               110
             ]
+          },
+          "axis": {
+            "grid": false
           }
         },
         "text": {
-          "field": "country"
+          "field": "label_text"
         },
         "color": {
           "field": "country",

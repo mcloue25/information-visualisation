@@ -2,36 +2,44 @@
   "$schema": "https://vega.github.io/schema/vega-lite/v6.json",
   "params": [
     {
-      "name": "startYear",
+      "name": "startYearInput",
       "value": 2000,
       "bind": {
         "input": "range",
         "min": 2000,
         "max": 2023,
         "step": 1,
-        "name": "Start: "
+        "name": "START YEAR: "
       }
     },
     {
-      "name": "endYear",
+      "name": "endYearInput",
       "value": 2023,
       "bind": {
         "input": "range",
         "min": 2000,
         "max": 2023,
         "step": 1,
-        "name": "End: "
+        "name": "END YEAR:   "
       }
+    },
+    {
+      "name": "startYear",
+      "expr": "startYearInput == endYearInput ? (startYearInput == 2000 ? 2000 : startYearInput - 1) : min(startYearInput, endYearInput)"
+    },
+    {
+      "name": "endYear",
+      "expr": "startYearInput == endYearInput ? (endYearInput == 2000 ? 2001 : endYearInput) : max(startYearInput, endYearInput)"
     }
   ],
   "width": 420,
   "height": 330,
   "title": {
-    "text": "Renewables vs fossil dependence",
+    "text": "Energy mix trade off",
     "subtitle": [
       "Upper-left = cleaner energy mix."
     ],
-    "anchor": "start"
+    "anchor": "middle"
   },
   "data": {
     "url": "../data/results/data/energy_dashboard_yearly.csv",
@@ -55,54 +63,6 @@
     }
   ],
   "layer": [
-    {
-      "data": {
-        "values": [
-          {
-            "x": 50
-          }
-        ]
-      },
-      "mark": {
-        "type": "rule",
-        "strokeDash": [
-          4,
-          4
-        ],
-        "strokeWidth": 1,
-        "color": "#D6D6D6"
-      },
-      "encoding": {
-        "x": {
-          "field": "x",
-          "type": "quantitative"
-        }
-      }
-    },
-    {
-      "data": {
-        "values": [
-          {
-            "y": 20
-          }
-        ]
-      },
-      "mark": {
-        "type": "rule",
-        "strokeDash": [
-          4,
-          4
-        ],
-        "strokeWidth": 1,
-        "color": "#D6D6D6"
-      },
-      "encoding": {
-        "y": {
-          "field": "y",
-          "type": "quantitative"
-        }
-      }
-    },
     {
       "mark": {
         "type": "circle",
@@ -286,7 +246,32 @@
         },
         "align": {
           "value": "left"
-        }
+        },
+        "tooltip": [
+          {
+            "field": "country",
+            "type": "nominal",
+            "title": "Country"
+          },
+          {
+            "field": "renewables_share_energy",
+            "type": "quantitative",
+            "format": ".1f",
+            "title": "Renewables share (%)"
+          },
+          {
+            "field": "fossil_share_energy",
+            "type": "quantitative",
+            "format": ".1f",
+            "title": "Fossil share (%)"
+          },
+          {
+            "field": "population",
+            "type": "quantitative",
+            "format": ",",
+            "title": "Population"
+          }
+        ]
       }
     }
   ],

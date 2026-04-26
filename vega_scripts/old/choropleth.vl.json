@@ -1,13 +1,13 @@
 {
-  "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
-  "width": 900,
-  "height": 430,
+  "$schema": "https://vega.github.io/schema/vega-lite/v6.json",
+  "width": 1200,
+  "height": 520,
   "title": {
-    "text": "Where are countries moving away from fossil fuels?",
+    "text": "Fossil-fuel reduction by country",
     "subtitle": [
-      "Colour shows the change in fossil fuel share of primary energy from 2000 to latest year.",
-      "Darker green means a larger reduction in fossil fuel dependence."
-    ]
+      "Darker green = larger fall in fossil-fuel share."
+    ],
+    "anchor": "start"
   },
   "projection": {
     "type": "equalEarth"
@@ -25,7 +25,7 @@
         "type": "geoshape",
         "fill": "#F1F1F1",
         "stroke": "white",
-        "strokeWidth": 0.4
+        "strokeWidth": 0.25
       }
     },
     {
@@ -77,15 +77,27 @@
       "mark": {
         "type": "geoshape",
         "stroke": "white",
-        "strokeWidth": 0.4
+        "strokeWidth": 0.25
       },
       "encoding": {
         "color": {
           "field": "fossil_reduction",
           "type": "quantitative",
-          "title": "Fossil fuel reduction as %",
+          "title": "Reduction (percentage points)",
           "scale": {
             "scheme": "greens"
+          },
+          "legend": {
+            "orient": "right",
+            "direction": "vertical",
+            "gradientLength": 360,
+            "gradientThickness": 16,
+            "titleOrient": "left",
+            "labelFontSize": 12,
+            "titleFontSize": 12,
+            "titleColor": "#1F2933",
+            "labelColor": "#1F2933",
+            "offset": 8
           }
         },
         "tooltip": [
@@ -130,19 +142,27 @@
     "font": "Inter, Arial, sans-serif",
     "title": {
       "anchor": "start",
-      "fontSize": 20,
-      "fontWeight": "normal",
-      "subtitleFontSize": 12,
-      "subtitleColor": "#666"
+      "fontSize": 18,
+      "fontWeight": "bold",
+      "color": "#1F2933",
+      "subtitleFontSize": 11,
+      "subtitleColor": "#5F6B66",
+      "offset": 8
+    },
+    "axis": {
+      "labelFontSize": 11,
+      "titleFontSize": 12,
+      "domainColor": "#B8C0BC",
+      "tickColor": "#B8C0BC",
+      "gridColor": "#E9ECEA",
+      "labelColor": "#1F2933",
+      "titleColor": "#1F2933"
     },
     "legend": {
-      "orient": "right",
-      "direction": "vertical",
-      "gradientLength": 300,
-      "gradientThickness": 12,
-      "titleOrient": "left",
       "labelFontSize": 11,
-      "titleFontSize": 12
+      "titleFontSize": 12,
+      "labelColor": "#1F2933",
+      "titleColor": "#1F2933"
     }
   }
 }

@@ -9,7 +9,7 @@
         "min": 2000,
         "max": 2023,
         "step": 1,
-        "name": "Start year: "
+        "name": "Start: "
       }
     },
     {
@@ -20,18 +20,18 @@
         "min": 2000,
         "max": 2023,
         "step": 1,
-        "name": "End year: "
+        "name": "End: "
       }
     }
   ],
-  "width": 860,
-  "height": 260,
+  "width": 1320,
+  "height": 340,
   "title": {
-    "text": "How has the transition evolved over time?",
+    "text": "Transition paths over time",
     "subtitle": [
-      "Selected leaders, an improver, a home-country reference, and large economies over the chosen time window.",
-      "Direct labels stay attached to the selected end year."
-    ]
+      "Clean electricity share minus fossil share."
+    ],
+    "anchor": "start"
   },
   "data": {
     "url": "../data/results/data/energy_story_countries.csv",
@@ -70,7 +70,13 @@
       "encoding": {
         "y": {
           "field": "transition_gap",
-          "type": "quantitative"
+          "type": "quantitative",
+          "scale": {
+            "domain": [
+              -100,
+              110
+            ]
+          }
         }
       }
     },
@@ -88,7 +94,13 @@
         "y": {
           "field": "transition_gap",
           "type": "quantitative",
-          "title": "Clean electricity share minus fossil share (pp)"
+          "title": "Clean electricity share minus fossil share (pp)",
+          "scale": {
+            "domain": [
+              -100,
+              110
+            ]
+          }
         },
         "color": {
           "field": "country",
@@ -151,7 +163,13 @@
         },
         "y": {
           "field": "transition_gap",
-          "type": "quantitative"
+          "type": "quantitative",
+          "scale": {
+            "domain": [
+              -100,
+              110
+            ]
+          }
         },
         "color": {
           "field": "country",
@@ -197,14 +215,19 @@
         },
         {
           "filter": "datum.year == datum.last_year"
+        },
+        {
+          "calculate": "datum.transition_gap + (datum.country == 'Iceland' ? 8 : datum.country == 'Norway' ? 3 : datum.country == 'Sweden' ? -3 : datum.country == 'Denmark' ? 5 : datum.country == 'Ireland' ? 0 : datum.country == 'India' ? -4 : 0)",
+          "as": "label_y"
         }
       ],
       "mark": {
         "type": "text",
         "align": "left",
         "baseline": "middle",
-        "dx": 5,
-        "fontSize": 9
+        "dx": 8,
+        "fontSize": 11,
+        "fontWeight": "bold"
       },
       "encoding": {
         "x": {
@@ -212,8 +235,14 @@
           "type": "quantitative"
         },
         "y": {
-          "field": "transition_gap",
-          "type": "quantitative"
+          "field": "label_y",
+          "type": "quantitative",
+          "scale": {
+            "domain": [
+              -100,
+              110
+            ]
+          }
         },
         "text": {
           "field": "country"
@@ -253,25 +282,26 @@
     "title": {
       "anchor": "start",
       "fontSize": 18,
-      "fontWeight": "normal",
+      "fontWeight": "bold",
+      "color": "#1F2933",
       "subtitleFontSize": 11,
-      "subtitleColor": "#666",
+      "subtitleColor": "#5F6B66",
       "offset": 8
     },
     "axis": {
       "labelFontSize": 11,
       "titleFontSize": 12,
-      "domainColor": "#999",
-      "tickColor": "#999",
-      "gridColor": "#E6E6E6",
-      "labelColor": "#333",
-      "titleColor": "#333"
+      "domainColor": "#B8C0BC",
+      "tickColor": "#B8C0BC",
+      "gridColor": "#E9ECEA",
+      "labelColor": "#1F2933",
+      "titleColor": "#1F2933"
     },
     "legend": {
       "labelFontSize": 11,
       "titleFontSize": 12,
-      "labelColor": "#333",
-      "titleColor": "#333"
+      "labelColor": "#1F2933",
+      "titleColor": "#1F2933"
     }
   }
 }
