@@ -118,7 +118,7 @@
               "lookup": "id",
               "from": {
                 "data": {
-                  "url": "../data/results/data/energy_fossil_reduction_map.csv",
+                  "url": "https://raw.githubusercontent.com/mcloue25/information-visualisation/main/data/results/data/energy_fossil_reduction_map.csv",
                   "format": {
                     "type": "csv",
                     "parse": {
@@ -225,7 +225,7 @@
             "anchor": "middle"
           },
           "data": {
-            "url": "../data/results/data/energy_dashboard_yearly.csv",
+            "url" : "https://raw.githubusercontent.com/mcloue25/information-visualisation/main/data/results/data/energy_dashboard_yearly.csv",
             "format": {
               "type": "csv",
               "parse": {
@@ -399,7 +399,7 @@
             "anchor": "middle"
           },
           "data": {
-            "url": "../data/results/data/energy_dashboard_yearly.csv",
+            "url" : "https://raw.githubusercontent.com/mcloue25/information-visualisation/main/data/results/data/energy_dashboard_yearly.csv",
             "format": {
               "type": "csv",
               "parse": {
@@ -644,7 +644,7 @@
             "anchor": "middle"
           },
           "data": {
-            "url": "../data/results/data/energy_improver_pairs.csv",
+            "url" : "https://raw.githubusercontent.com/mcloue25/information-visualisation/main/data/results/data/energy_improver_pairs.csv",
             "format": {
               "type": "csv",
               "parse": {
@@ -870,7 +870,7 @@
         "anchor": "middle"
       },
       "data": {
-        "url": "../data/results/data/energy_story_countries.csv",
+        "url" : "https://raw.githubusercontent.com/mcloue25/information-visualisation/main/data/results/data/energy_story_countries.csv",
         "format": {
           "type": "csv",
           "parse": {
