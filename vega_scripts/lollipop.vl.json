@@ -2,26 +2,34 @@
   "$schema": "https://vega.github.io/schema/vega-lite/v6.json",
   "params": [
     {
-      "name": "startYear",
+      "name": "startYearInput",
       "value": 2000,
       "bind": {
         "input": "range",
         "min": 2000,
         "max": 2023,
         "step": 1,
-        "name": "Start: "
+        "name": "START YEAR: "
       }
     },
     {
-      "name": "endYear",
+      "name": "endYearInput",
       "value": 2023,
       "bind": {
         "input": "range",
         "min": 2000,
         "max": 2023,
         "step": 1,
-        "name": "End: "
+        "name": "END YEAR:   "
       }
+    },
+    {
+      "name": "startYear",
+      "expr": "startYearInput == endYearInput ? (startYearInput == 2000 ? 2000 : startYearInput - 1) : min(startYearInput, endYearInput)"
+    },
+    {
+      "name": "endYear",
+      "expr": "startYearInput == endYearInput ? (endYearInput == 2000 ? 2001 : endYearInput) : max(startYearInput, endYearInput)"
     }
   ],
   "width": 420,
@@ -29,9 +37,9 @@
   "title": {
     "text": "Renewable leaders",
     "subtitle": [
-      "Top 10 by share in end year."
+      "Top 10 by share"
     ],
-    "anchor": "start"
+    "anchor": "middle"
   },
   "data": {
     "url": "../data/results/data/energy_dashboard_yearly.csv",
